@@ -12,6 +12,15 @@
     "updated_at",
     "trigger"
   ],
+  "homepage": "https://github.com/harryplusplus/mikro-orm-pg-migration-generator",
+  "bugs": {
+    "url": "https://github.com/harryplusplus/mikro-orm-pg-migration-generator/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/harryplusplus/mikro-orm-pg-migration-generator.git"
+  },
+  "license": "MIT",
   "author": {
     "name": "harryplusplus",
     "email": "harryplusplus@gmail.com",
