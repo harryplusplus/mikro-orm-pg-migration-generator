@@ -1,0 +1,62 @@
+{
+  "name": "mikro-orm-pg-migration-generator",
+  "version": "0.1.0",
+  "keywords": [
+    "mikro",
+    "mikro-orm",
+    "pg",
+    "postgres",
+    "postgresql",
+    "migration",
+    "generator",
+    "updated_at",
+    "trigger"
+  ],
+  "author": {
+    "name": "harryplusplus",
+    "email": "harryplusplus@gmail.com",
+    "url": "https://harryplusplus.com"
+  },
+  "type": "commonjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "lint": "eslint",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@pgsql/parser": "1.2.0",
+    "@pgsql/traverse": "17.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.36.0",
+    "@mikro-orm/core": "^6.5.6",
+    "@mikro-orm/knex": "^6.5.6",
+    "@mikro-orm/migrations": "^6.5.6",
+    "@swc/jest": "0.2.39",
+    "@types/jest": "30.0.0",
+    "@types/node": "24.5.2",
+    "eslint": "9.36.0",
+    "jest": "30.2.0",
+    "sort-package-json": "3.4.0",
+    "tsup": "8.5.0",
+    "type-fest": "5.0.1",
+    "typescript": "5.9.2",
+    "typescript-eslint": "8.44.1"
+  },
+  "peerDependencies": {
+    "@mikro-orm/migrations": "^6.5.6"
+  },
+  "packageManager": "pnpm@10.15.1"
+}
