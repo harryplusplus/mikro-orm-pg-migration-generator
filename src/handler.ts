@@ -1,5 +1,6 @@
 import type { MigrationDiff } from "@mikro-orm/core";
 import { Parser, type SupportedVersion } from "@pgsql/parser";
+import { EmptySqlProcessor } from "./empty-sql-processor";
 import { type Options, type ParsedOptions, parseOptions } from "./options";
 import { UpdatedAtProcessor } from "./updated-at-processor";
 
@@ -24,7 +25,7 @@ export class Handler {
   }
 
   onGenerateMigrationFile(diff: MigrationDiff): void {
-    const processor = new UpdatedAtProcessor(this.context);
-    processor.process(diff);
+    new EmptySqlProcessor().process(diff);
+    new UpdatedAtProcessor(this.context).process(diff);
   }
 }
