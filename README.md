@@ -116,6 +116,36 @@ The `down` migration safely removes the trigger, and function, ensuring clean ro
 
 **This concise example shows how the generator integrates with MikroORM migrations for robust and automatic timestamp logic in your PostgreSQL schema.**
 
+## How to Extend the Migration Generator
+
+To add custom functionality—such as automatically formatting SQL with [**sql-formatter**](https://github.com/sql-formatter-org/sql-formatter)—extend the generator as follows:
+
+```sh
+# npm
+npm install -D sql-formatter
+
+# pnpm
+pnpm add -D sql-formatter
+```
+
+```typescript
+import { createMigrationGeneratorClass } from "mikro-orm-pg-migration-generator";
+import { format } from "sql-formatter";
+
+const BaseMigrationGenerator = createMigrationGeneratorClass();
+
+class CustomMigrationGenerator extends BaseMigrationGenerator {
+  override createStatement(sql: string, padLeft: number): string {
+    sql = format(sql, { language: "postgresql" });
+    sql = `\n${sql}\n`;
+    return super.createStatement(sql, padLeft);
+  }
+}
+```
+
+This example demonstrates how to wrap the migration generator and override methods—such as `createStatement`—to incorporate additional logic (e.g., SQL formatting).
+You can customize other behaviors the same way, making the generator flexible and easy to extend for advanced migration requirements.
+
 ## License
 
 MIT
