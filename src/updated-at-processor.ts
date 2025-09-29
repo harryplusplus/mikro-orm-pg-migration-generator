@@ -1,12 +1,7 @@
 import type { MigrationDiff } from "@mikro-orm/core";
-import {
-  Parser,
-  type ColumnDef,
-  type CreateStmt,
-  type SupportedVersion,
-} from "@pgsql/parser";
+import type { ColumnDef, CreateStmt } from "@pgsql/parser";
 import { walk } from "@pgsql/traverse";
-import { parseOptions, type Options, type ParsedOptions } from "./options";
+import type { HandlerContext } from "./handler";
 import type { SqlFactoryContext } from "./updated-at-options";
 
 export interface UpdatedAtInfo {
@@ -15,42 +10,33 @@ export interface UpdatedAtInfo {
   columnNames: string[];
 }
 
-export class GenerateMigrationFileProcessor {
-  private readonly options: ParsedOptions;
-  private readonly parser: Parser<SupportedVersion>;
+export class UpdatedAtProcessor {
   private readonly updatedAtInfos: UpdatedAtInfo[] = [];
 
-  constructor(options?: Options) {
-    this.options = parseOptions(options);
-    this.parser = new Parser<SupportedVersion>({
-      version: this.options.version,
-    });
-  }
+  constructor(private readonly handlerContext: HandlerContext) {}
 
-  async process(diff: MigrationDiff) {
-    await this.parser.loadParser();
-
+  process(diff: MigrationDiff) {
     diff.up.forEach((sql) => this.parseUp(sql));
 
-    const { updatedAt } = this.options;
+    const { updatedAt } = this.handlerContext.options;
     this.updatedAtInfos.forEach(({ schemaName, tableName, columnNames }) => {
       columnNames.forEach((columnName) => {
-        const context: SqlFactoryContext = {
+        const sqlFactoryContext: SqlFactoryContext = {
           ...updatedAt,
           schemaName,
           tableName,
           columnName,
         };
-        diff.up.push(updatedAt.functionUpSqlFactory(context));
-        diff.up.push(updatedAt.triggerUpSqlFactory(context));
-        diff.down.unshift(updatedAt.triggerDownSqlFactory(context));
-        diff.down.unshift(updatedAt.functionDownSqlFactory(context));
+        diff.up.push(updatedAt.functionUpSqlFactory(sqlFactoryContext));
+        diff.up.push(updatedAt.triggerUpSqlFactory(sqlFactoryContext));
+        diff.down.unshift(updatedAt.triggerDownSqlFactory(sqlFactoryContext));
+        diff.down.unshift(updatedAt.functionDownSqlFactory(sqlFactoryContext));
       });
     });
   }
 
   private parseUp(sql: string) {
-    const { stmts } = this.parser.parseSync(sql);
+    const { stmts } = this.handlerContext.parser.parseSync(sql);
     if (!stmts) return;
 
     stmts.forEach((stmt) => {
@@ -84,7 +70,8 @@ export class GenerateMigrationFileProcessor {
   }
 
   private parseColumnDef(columnDef: ColumnDef): string | undefined {
-    const { columnNameMatcher, columnTypeMatcher } = this.options.updatedAt;
+    const { columnNameMatcher, columnTypeMatcher } =
+      this.handlerContext.options.updatedAt;
 
     const columnName = columnDef.colname;
     if (!columnName) return;

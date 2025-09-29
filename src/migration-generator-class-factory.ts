@@ -3,12 +3,9 @@ import type {
   MigrationsOptions,
   NamingStrategy,
 } from "@mikro-orm/core";
-import { AbstractSqlDriver } from "@mikro-orm/knex";
-import {
-  MigrationGenerator,
-  TSMigrationGenerator,
-} from "@mikro-orm/migrations";
-import { GenerateMigrationFileProcessor } from "./generate-migration-file-processor";
+import type { AbstractSqlDriver } from "@mikro-orm/knex";
+import { TSMigrationGenerator } from "@mikro-orm/migrations";
+import { Handler } from "./handler";
 import type { Options } from "./options";
 
 export class MigrationGeneratorClassFactory {
@@ -17,8 +14,8 @@ export class MigrationGeneratorClassFactory {
   create() {
     const factoryOptions = this.options;
 
-    class MigrationGeneratorFacade extends MigrationGenerator {
-      readonly ts: TSMigrationGenerator;
+    class MigrationGeneratorFacade extends TSMigrationGenerator {
+      readonly handler: Handler;
 
       constructor(
         override readonly driver: AbstractSqlDriver,
@@ -26,16 +23,24 @@ export class MigrationGeneratorClassFactory {
         override readonly options: MigrationsOptions
       ) {
         super(driver, namingStrategy, options);
-        this.ts = new TSMigrationGenerator(driver, namingStrategy, options);
+        this.handler = new Handler(factoryOptions);
       }
 
-      override async generateMigrationFile(
+      override async generate(
+        diff: MigrationDiff,
+        path?: string,
+        name?: string
+      ): Promise<[string, string]> {
+        await this.handler.onGenerate();
+        return await super.generate(diff, path, name);
+      }
+
+      override generateMigrationFile(
         className: string,
         diff: MigrationDiff
-      ): Promise<string> {
-        const processor = new GenerateMigrationFileProcessor(factoryOptions);
-        await processor.process(diff);
-        return this.ts.generateMigrationFile(className, diff);
+      ): string {
+        this.handler.onGenerateMigrationFile(diff);
+        return super.generateMigrationFile(className, diff);
       }
     }
 
