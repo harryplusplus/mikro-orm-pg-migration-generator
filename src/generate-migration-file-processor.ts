@@ -1,11 +1,12 @@
 import type { MigrationDiff } from "@mikro-orm/core";
-import Parser, {
+import {
+  Parser,
   type ColumnDef,
   type CreateStmt,
   type SupportedVersion,
 } from "@pgsql/parser";
 import { walk } from "@pgsql/traverse";
-import { type Options, type ParsedOptions, parseOptions } from "./options";
+import { parseOptions, type Options, type ParsedOptions } from "./options";
 import type { SqlFactoryContext } from "./updated-at-options";
 
 export interface UpdatedAtInfo {
@@ -26,11 +27,12 @@ export class GenerateMigrationFileProcessor {
     });
   }
 
-  process(diff: MigrationDiff) {
-    const { updatedAt } = this.options;
+  async process(diff: MigrationDiff) {
+    await this.parser.loadParser();
 
     diff.up.forEach((sql) => this.parseUp(sql));
 
+    const { updatedAt } = this.options;
     this.updatedAtInfos.forEach(({ schemaName, tableName, columnNames }) => {
       columnNames.forEach((columnName) => {
         const context: SqlFactoryContext = {

@@ -4,7 +4,10 @@ import type {
   NamingStrategy,
 } from "@mikro-orm/core";
 import { AbstractSqlDriver } from "@mikro-orm/knex";
-import { TSMigrationGenerator } from "@mikro-orm/migrations";
+import {
+  MigrationGenerator,
+  TSMigrationGenerator,
+} from "@mikro-orm/migrations";
 import { GenerateMigrationFileProcessor } from "./generate-migration-file-processor";
 import type { Options } from "./options";
 
@@ -14,22 +17,25 @@ export class MigrationGeneratorClassFactory {
   create() {
     const factoryOptions = this.options;
 
-    class MigrationGeneratorFacade extends TSMigrationGenerator {
+    class MigrationGeneratorFacade extends MigrationGenerator {
+      readonly ts: TSMigrationGenerator;
+
       constructor(
         override readonly driver: AbstractSqlDriver,
         override readonly namingStrategy: NamingStrategy,
         override readonly options: MigrationsOptions
       ) {
         super(driver, namingStrategy, options);
+        this.ts = new TSMigrationGenerator(driver, namingStrategy, options);
       }
 
-      override generateMigrationFile(
+      override async generateMigrationFile(
         className: string,
         diff: MigrationDiff
-      ): string {
+      ): Promise<string> {
         const processor = new GenerateMigrationFileProcessor(factoryOptions);
-        processor.process(diff);
-        return super.generateMigrationFile(className, diff);
+        await processor.process(diff);
+        return this.ts.generateMigrationFile(className, diff);
       }
     }
 
