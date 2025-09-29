@@ -27,10 +27,12 @@ export class UpdatedAtProcessor {
           tableName,
           columnName,
         };
+
         diff.up.push(updatedAt.functionUpSqlFactory(sqlFactoryContext));
         diff.up.push(updatedAt.triggerUpSqlFactory(sqlFactoryContext));
-        diff.down.unshift(updatedAt.triggerDownSqlFactory(sqlFactoryContext));
+
         diff.down.unshift(updatedAt.functionDownSqlFactory(sqlFactoryContext));
+        diff.down.unshift(updatedAt.triggerDownSqlFactory(sqlFactoryContext));
       });
     });
   }
