@@ -1,7 +1,7 @@
 import type { MigrationDiff } from "@mikro-orm/core";
 import type { ColumnDef, CreateStmt } from "@pgsql/parser";
 import { walk } from "@pgsql/traverse";
-import type { HandlerContext } from "./handler";
+import type { InterceptorContext } from "./interceptor";
 import type { SqlFactoryContext } from "./updated-at-options";
 
 export interface UpdatedAtInfo {
@@ -13,12 +13,15 @@ export interface UpdatedAtInfo {
 export class UpdatedAtProcessor {
   private readonly updatedAtInfos: UpdatedAtInfo[] = [];
 
-  constructor(private readonly handlerContext: HandlerContext) {}
+  constructor(
+    private readonly interceptorContext: InterceptorContext,
+    private readonly diff: MigrationDiff
+  ) {}
 
-  process(diff: MigrationDiff) {
-    diff.up.forEach((sql) => this.parseUp(sql));
+  process() {
+    this.collectUpdatedAtInfos();
 
-    const { updatedAt } = this.handlerContext.options;
+    const { updatedAt } = this.interceptorContext.options;
     this.updatedAtInfos.forEach(({ schemaName, tableName, columnNames }) => {
       columnNames.forEach((columnName) => {
         const sqlFactoryContext: SqlFactoryContext = {
@@ -28,17 +31,22 @@ export class UpdatedAtProcessor {
           columnName,
         };
 
-        diff.up.push(updatedAt.functionUpSqlFactory(sqlFactoryContext));
-        diff.up.push(updatedAt.triggerUpSqlFactory(sqlFactoryContext));
+        const { up, down } = this.diff;
+        up.push(updatedAt.functionUpSqlFactory(sqlFactoryContext));
+        down.unshift(updatedAt.functionDownSqlFactory(sqlFactoryContext));
 
-        diff.down.unshift(updatedAt.functionDownSqlFactory(sqlFactoryContext));
-        diff.down.unshift(updatedAt.triggerDownSqlFactory(sqlFactoryContext));
+        up.push(updatedAt.triggerUpSqlFactory(sqlFactoryContext));
+        down.unshift(updatedAt.triggerDownSqlFactory(sqlFactoryContext));
       });
     });
   }
 
+  private collectUpdatedAtInfos() {
+    this.diff.up.forEach((sql) => this.parseUp(sql));
+  }
+
   private parseUp(sql: string) {
-    const { stmts } = this.handlerContext.parser.parseSync(sql);
+    const { stmts } = this.interceptorContext.parser.parseSync(sql);
     if (!stmts) return;
 
     stmts.forEach((stmt) => {
@@ -73,7 +81,7 @@ export class UpdatedAtProcessor {
 
   private parseColumnDef(columnDef: ColumnDef): string | undefined {
     const { columnNameMatcher, columnTypeMatcher } =
-      this.handlerContext.options.updatedAt;
+      this.interceptorContext.options.updatedAt;
 
     const columnName = columnDef.colname;
     if (!columnName) return;

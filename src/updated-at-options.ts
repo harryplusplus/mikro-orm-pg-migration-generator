@@ -104,13 +104,13 @@ export interface UpdatedAtOptions {
   triggerDownSqlFactory?: SqlFactory;
 }
 
-export type ParsedUpdatedAtOptions = SimplifyDeep<
+export type FilledUpdatedAtOptions = SimplifyDeep<
   RequiredDeep<UpdatedAtOptions>
 >;
 
-export function parseUpdatedAtOptions(
+export function fillUpdatedAtOptions(
   options?: UpdatedAtOptions
-): ParsedUpdatedAtOptions {
+): FilledUpdatedAtOptions {
   const {
     columnNameMatcher = DEFAULT_COLUMN_NAME_MATCHER,
     columnTypeMatcher = DEFAULT_COLUMN_TYPE_MATCHER,

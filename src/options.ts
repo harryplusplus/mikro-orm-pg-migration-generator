@@ -1,7 +1,7 @@
 import type { SupportedVersion } from "@pgsql/parser";
 import type { RequiredDeep, SimplifyDeep } from "type-fest";
 import {
-  parseUpdatedAtOptions,
+  fillUpdatedAtOptions,
   type UpdatedAtOptions,
 } from "./updated-at-options";
 
@@ -10,12 +10,12 @@ export interface Options {
   updatedAt?: UpdatedAtOptions;
 }
 
-export type ParsedOptions = SimplifyDeep<RequiredDeep<Options>>;
+export type FilledOptions = SimplifyDeep<RequiredDeep<Options>>;
 
-export function parseOptions(options?: Options): ParsedOptions {
+export function fillOptions(options?: Options): FilledOptions {
   const { version = 17, updatedAt } = options ?? {};
   return {
     version,
-    updatedAt: parseUpdatedAtOptions(updatedAt),
+    updatedAt: fillUpdatedAtOptions(updatedAt),
   };
 }

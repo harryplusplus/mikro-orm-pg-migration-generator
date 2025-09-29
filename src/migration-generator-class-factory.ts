@@ -5,7 +5,7 @@ import type {
 } from "@mikro-orm/core";
 import type { AbstractSqlDriver } from "@mikro-orm/knex";
 import { TSMigrationGenerator } from "@mikro-orm/migrations";
-import { Handler } from "./handler";
+import { Interceptor } from "./interceptor";
 import type { Options } from "./options";
 
 export class MigrationGeneratorClassFactory {
@@ -15,7 +15,7 @@ export class MigrationGeneratorClassFactory {
     const factoryOptions = this.options;
 
     class MigrationGeneratorFacade extends TSMigrationGenerator {
-      readonly handler: Handler;
+      readonly interceptor = new Interceptor(factoryOptions);
 
       constructor(
         override readonly driver: AbstractSqlDriver,
@@ -23,7 +23,6 @@ export class MigrationGeneratorClassFactory {
         override readonly options: MigrationsOptions
       ) {
         super(driver, namingStrategy, options);
-        this.handler = new Handler(factoryOptions);
       }
 
       override async generate(
@@ -31,16 +30,25 @@ export class MigrationGeneratorClassFactory {
         path?: string,
         name?: string
       ): Promise<[string, string]> {
-        await this.handler.onGenerate();
-        return await super.generate(diff, path, name);
+        return await this.interceptor.generate({ diff, path, name }, (input) =>
+          super.generate(input.diff, input.path, input.name)
+        );
+      }
+
+      override createStatement(sql: string, padLeft: number): string {
+        return this.interceptor.createStatement({ sql, padLeft }, (input) =>
+          super.createStatement(input.sql, input.padLeft)
+        );
       }
 
       override generateMigrationFile(
         className: string,
         diff: MigrationDiff
       ): string {
-        this.handler.onGenerateMigrationFile(diff);
-        return super.generateMigrationFile(className, diff);
+        return this.interceptor.generateMigrationFile(
+          { className, diff },
+          (input) => super.generateMigrationFile(input.className, input.diff)
+        );
       }
     }
 

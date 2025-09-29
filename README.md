@@ -149,7 +149,3 @@ You can customize other behaviors the same way, making the generator flexible an
 ## License
 
 MIT
-
-## Credits
-
-Inspired by the need to bridge the gap between PostgreSQL migrations and the convenience offered by MySQL timestamp features.
